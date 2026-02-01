@@ -21,6 +21,7 @@ async function copyToClipboard(text) {
     textarea.style.position = "fixed";
     textarea.style.left = "-9999px";
     document.body.appendChild(textarea);
+    textarea.focus();
     textarea.select();
     document.execCommand("copy");
     document.body.removeChild(textarea);

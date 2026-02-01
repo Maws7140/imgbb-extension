@@ -5,7 +5,7 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Upload to ImgBB & Copy Link",
     contexts: ["image"]
   });
-  
+
   chrome.contextMenus.create({
     id: "uploadToImgBBBBCode",
     title: "Upload to ImgBB & Copy BB Code",
@@ -25,7 +25,7 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
   try {
     // Get API key from storage
     const { apiKey, expiration = "0" } = await chrome.storage.sync.get(["apiKey", "expiration"]);
-    
+
     if (!apiKey) {
       showNotification("Missing API Key", "Set it in the popup.");
       return;
@@ -36,7 +36,7 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
 
     // Fetch the image and convert to base64
     const base64Data = await fetchImageAsBase64(imageUrl);
-    
+
     if (!base64Data) {
       showNotification("Failed", "Could not fetch image.");
       return;
@@ -46,7 +46,7 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
     const params = new URLSearchParams();
     params.append("key", apiKey);
     params.append("image", base64Data);
-    
+
     if (expiration !== "0") {
       params.append("expiration", expiration);
     }
@@ -64,16 +64,16 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
     if (data.success) {
       const imgUrl = data.data.url;
       let textToCopy;
-      
+
       if (copyBBCode) {
         textToCopy = `[img]${imgUrl}[/img]`;
       } else {
         textToCopy = imgUrl;
       }
-      
+
       // Copy to clipboard using offscreen document
-      await copyToClipboard(textToCopy);
-      
+      const copied = await copyToClipboard(textToCopy);
+
       // Save to history
       await saveToHistory({
         id: data.data.id,
@@ -86,7 +86,11 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
       });
 
       const typeLabel = copyBBCode ? "BB Code" : "Link";
-      showNotification("Copied", `[${typeLabel}]`);
+      if (copied) {
+        showNotification("Copied", `[${typeLabel}]`);
+      } else {
+        showNotification("Upload Complete", "Copy failed. Check history.");
+      }
     } else {
       const errorMsg = data.error?.message || "Unknown error.";
       showNotification("Failed", errorMsg);
@@ -101,7 +105,7 @@ async function fetchImageAsBase64(imageUrl) {
   try {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
-    
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -124,7 +128,7 @@ async function copyToClipboard(text) {
     const existingContexts = await chrome.runtime.getContexts({
       contextTypes: ["OFFSCREEN_DOCUMENT"]
     });
-    
+
     if (existingContexts.length === 0) {
       await chrome.offscreen.createDocument({
         url: "offscreen.html",
@@ -134,21 +138,26 @@ async function copyToClipboard(text) {
     }
   } catch (e) {
     console.error("Offscreen document error:", e);
+    return false;
   }
 
   // Small delay to ensure the offscreen document is ready
   await new Promise(resolve => setTimeout(resolve, 50));
 
   // Send message to offscreen document to copy text
+  let result = false;
   try {
-    await chrome.runtime.sendMessage({
+    const response = await chrome.runtime.sendMessage({
       type: "copy-to-clipboard",
       text: text
     });
+    if (response && response.success) {
+      result = true;
+    }
   } catch (e) {
     console.error("Copy message error:", e);
   }
-  
+
   // Close offscreen document after a short delay
   setTimeout(async () => {
     try {
@@ -157,6 +166,8 @@ async function copyToClipboard(text) {
       // Ignore errors when closing
     }
   }, 200);
+
+  return result;
 }
 
 async function saveToHistory(item) {
