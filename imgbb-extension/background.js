@@ -71,8 +71,8 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
         textToCopy = imgUrl;
       }
 
-      // Copy to clipboard using offscreen document
-      const copied = await copyToClipboard(textToCopy);
+      // Copy to clipboard directly (works in Firefox background scripts)
+      const copied = copyToClipboard(textToCopy);
 
       // Save to history
       await saveToHistory({
@@ -122,52 +122,19 @@ async function fetchImageAsBase64(imageUrl) {
   }
 }
 
-async function copyToClipboard(text) {
-  // Try using the clipboard API through an offscreen document
+function copyToClipboard(text) {
   try {
-    const existingContexts = await chrome.runtime.getContexts({
-      contextTypes: ["OFFSCREEN_DOCUMENT"]
-    });
-
-    if (existingContexts.length === 0) {
-      await chrome.offscreen.createDocument({
-        url: "offscreen.html",
-        reasons: ["CLIPBOARD"],
-        justification: "Copy image URL to clipboard"
-      });
-    }
-  } catch (e) {
-    console.error("Offscreen document error:", e);
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    const successful = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return successful;
+  } catch (err) {
+    console.error("Copy failed:", err);
     return false;
   }
-
-  // Small delay to ensure the offscreen document is ready
-  await new Promise(resolve => setTimeout(resolve, 50));
-
-  // Send message to offscreen document to copy text
-  let result = false;
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: "copy-to-clipboard",
-      text: text
-    });
-    if (response && response.success) {
-      result = true;
-    }
-  } catch (e) {
-    console.error("Copy message error:", e);
-  }
-
-  // Close offscreen document after a short delay
-  setTimeout(async () => {
-    try {
-      await chrome.offscreen.closeDocument();
-    } catch (e) {
-      // Ignore errors when closing
-    }
-  }, 200);
-
-  return result;
 }
 
 async function saveToHistory(item) {
@@ -186,11 +153,3 @@ function showNotification(title, message) {
     priority: 2
   });
 }
-
-// Listen for messages from offscreen document
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "copy-complete") {
-    sendResponse({ success: true });
-  }
-  return true;
-});

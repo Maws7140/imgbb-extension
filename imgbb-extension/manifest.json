@@ -7,15 +7,22 @@
     "contextMenus",
     "storage",
     "notifications",
-    "clipboardWrite",
-    "offscreen"
+    "clipboardWrite"
   ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "imgbb-uploader@example.com",
+      "strict_min_version": "109.0"
+    }
+  },
   "host_permissions": [
     "https://api.imgbb.com/*",
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": [
+      "background.js"
+    ]
   },
   "action": {
     "default_popup": "popup.html",
