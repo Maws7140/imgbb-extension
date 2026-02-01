@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
   // Load saved settings
   const { apiKey, expiration } = await chrome.storage.sync.get(["apiKey", "expiration"]);
-  
+
   if (apiKey) {
     document.getElementById("apiKey").value = apiKey;
   }
-  
+
   if (expiration) {
     document.getElementById("expiration").value = expiration;
   }
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const input = document.getElementById("apiKey");
     const btn = document.getElementById("toggleBtn");
     const icon = btn.querySelector("svg");
-    
+
     if (input.type === "password") {
       input.type = "text";
       // Eye Off Icon
@@ -62,68 +62,145 @@ async function renderHistory() {
   const { history = [] } = await chrome.storage.local.get(["history"]);
   const container = document.getElementById("historyList");
 
+  // clear container safely
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
   if (history.length === 0) {
-    container.innerHTML = '<div class="empty-state">No uploads.</div>';
+    const emptyState = document.createElement("div");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "No uploads.";
+    container.appendChild(emptyState);
     return;
   }
 
-  container.innerHTML = history.map((item) => {
+  history.forEach((item) => {
     const timeAgo = getTimeAgo(item.timestamp);
-    return `
-      <div class="history-item">
-        <img src="${item.thumb}" class="history-thumb" alt="Thumbnail" loading="lazy">
-        <div class="history-content">
-          <a href="${item.url}" target="_blank" class="history-link" title="${item.url}">${item.url}</a>
-          <div class="history-meta">${timeAgo}</div>
-        </div>
-        <div class="history-actions">
-          <button class="btn-action" data-url="${item.url}" data-type="link" title="Copy Link">
-            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-          </button>
-          <button class="btn-action" data-url="${item.url}" data-type="bb" title="Copy BB Code">
-            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>
-          </button>
-        </div>
-      </div>
-    `;
-  }).join("");
 
-  // Add copy event listeners
-  container.querySelectorAll(".btn-action").forEach(btn => {
-    btn.addEventListener("click", async (e) => {
-      const url = btn.dataset.url;
-      const type = btn.dataset.type;
-      const textToCopy = type === "bb" ? `[img]${url}[/img]` : url;
-      
-      try {
-        await navigator.clipboard.writeText(textToCopy);
-        
-        // Visual feedback
-        btn.classList.add("copied");
-        const originalIcon = btn.innerHTML;
-        
-        // Check mark icon
-        btn.innerHTML = '<svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-        
-        setTimeout(() => {
-          btn.classList.remove("copied");
-          btn.innerHTML = originalIcon;
-        }, 1500);
-      } catch (err) {
-        showStatus("Failed to copy", "error");
-      }
-    });
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "history-item";
+
+    // Thumbnail
+    const img = document.createElement("img");
+    img.src = item.thumb;
+    img.className = "history-thumb";
+    img.alt = "Thumbnail";
+    img.loading = "lazy";
+    itemDiv.appendChild(img);
+
+    // Content
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "history-content";
+
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.target = "_blank";
+    link.className = "history-link";
+    link.title = item.url;
+    link.textContent = item.url;
+    contentDiv.appendChild(link);
+
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "history-meta";
+    metaDiv.textContent = timeAgo;
+    contentDiv.appendChild(metaDiv);
+
+    itemDiv.appendChild(contentDiv);
+
+    // Actions
+    const actionsDiv = document.createElement("div");
+    actionsDiv.className = "history-actions";
+
+    const copyLinkBtn = createActionButton(item.url, "link", "Copy Link");
+    const copyBbBtn = createActionButton(item.url, "bb", "Copy BB Code");
+
+    actionsDiv.appendChild(copyLinkBtn);
+    actionsDiv.appendChild(copyBbBtn);
+    itemDiv.appendChild(actionsDiv);
+
+    container.appendChild(itemDiv);
   });
+}
+
+function createActionButton(url, type, title) {
+  const btn = document.createElement("button");
+  btn.className = "btn-action";
+  btn.dataset.url = url;
+  btn.dataset.type = type;
+  btn.title = title;
+
+  // Create icon using DOM methods
+  function createLinkIcon() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "icon icon-sm");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path1.setAttribute("d", "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71");
+    const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path2.setAttribute("d", "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71");
+    svg.appendChild(path1);
+    svg.appendChild(path2);
+    return svg;
+  }
+
+  function createBbIcon() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "icon icon-sm");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M4 7V4h16v3M9 20h6M12 4v16");
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function createCheckIcon() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "icon icon-sm");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    polyline.setAttribute("points", "20 6 9 17 4 12");
+    svg.appendChild(polyline);
+    return svg;
+  }
+
+  const createIcon = type === 'link' ? createLinkIcon : createBbIcon;
+  btn.appendChild(createIcon());
+
+  btn.addEventListener("click", async () => {
+    const textToCopy = type === "bb" ? `[img]${url}[/img]` : url;
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+
+      // Visual feedback
+      btn.classList.add("copied");
+
+      // Replace with check icon
+      while (btn.firstChild) btn.removeChild(btn.firstChild);
+      btn.appendChild(createCheckIcon());
+
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        while (btn.firstChild) btn.removeChild(btn.firstChild);
+        btn.appendChild(createIcon());
+      }, 1500);
+    } catch (err) {
+      showStatus("Failed to copy", "error");
+    }
+  });
+
+  return btn;
 }
 
 function getTimeAgo(timestamp) {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  
+
   if (seconds < 60) return "just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  
+
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -131,10 +208,10 @@ function showStatus(message, type) {
   const status = document.getElementById("status");
   status.textContent = message;
   status.className = `status-toast ${type === 'error' ? 'error' : ''} visible`;
-  
+
   // Clear any existing timeout to avoid glitching
   if (status.timeoutId) clearTimeout(status.timeoutId);
-  
+
   status.timeoutId = setTimeout(() => {
     status.className = `status-toast ${type === 'error' ? 'error' : ''}`;
   }, 3000);
