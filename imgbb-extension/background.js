@@ -85,9 +85,8 @@ async function uploadImage(imageUrl, tabId, copyBBCode = false) {
         expiration: expiration !== "0" ? parseInt(expiration) : null
       });
 
-      const typeLabel = copyBBCode ? "BB Code" : "Link";
       if (copied) {
-        showNotification("Copied", `[${typeLabel}]`);
+        showNotification("Copied", textToCopy);
       } else {
         showNotification("Upload Complete", "Copy failed. Check history.");
       }
