@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Extension Icon Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 { margin-bottom: 2rem; }
+    .canvas-container {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    canvas {
+      background: transparent;
+      border: 1px dashed #334155;
+      border-radius: 8px;
+    }
+    button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #4f46e5; }
+    .instructions {
+      max-width: 600px;
+      text-align: center;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Icon Generator</h1>
+  <p class="instructions">
+    The current extension icons were described as "unprofessional". 
+    Click "Download All Icons" below to generate a new set of modern, clean SVG-based PNG icons 
+    to your Downloads folder. Then replace the files in the 'icons' folder with these new ones.
+  </p>
+
+  <div class="canvas-container">
+    <div class="preview">
+      <canvas id="c128" width="128" height="128"></canvas>
+      <span>128x128</span>
+    </div>
+    <div class="preview">
+      <canvas id="c48" width="48" height="48"></canvas>
+      <span>48x48</span>
+    </div>
+    <div class="preview">
+      <canvas id="c32" width="32" height="32"></canvas>
+      <span>32x32</span>
+    </div>
+    <div class="preview">
+      <canvas id="c16" width="16" height="16"></canvas>
+      <span>16x16</span>
+    </div>
+  </div>
+
+  <button onclick="downloadAll()">Download All Icons</button>
+
+  <script>
+    const colors = {
+      bg: '#6366f1', // Indigo 500
+      fg: '#ffffff'
+    };
+
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const center = size / 2;
+      
+      ctx.clearRect(0, 0, size, size);
+      
+      // Draw Background (Rounded Rect)
+      const radius = size * 0.2;
+      ctx.fillStyle = colors.bg;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, radius);
+      ctx.fill();
+
+      // Draw Cloud Icon (Simplified)
+      ctx.fillStyle = colors.fg;
+      ctx.save();
+      
+      // Scale context to fit icon in 60% of box
+      const scale = size / 24 * 0.6;
+      ctx.translate(center, center);
+      ctx.scale(scale, scale);
+      ctx.translate(-12, -12); // Center the 24x24 icon path
+
+      // Cloud Upload Path
+      const path = new Path2D("M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12");
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.stroke(path);
+      
+      ctx.restore();
+    }
+
+    window.onload = () => {
+      drawIcon('c128', 128);
+      drawIcon('c48', 48);
+      drawIcon('c32', 32);
+      drawIcon('c16', 16);
+    };
+
+    function downloadAll() {
+      downloadCanvas('c128', 'icon128.png');
+      setTimeout(() => downloadCanvas('c48', 'icon48.png'), 200);
+      setTimeout(() => downloadCanvas('c32', 'icon32.png'), 400);
+      setTimeout(() => downloadCanvas('c16', 'icon16.png'), 600);
+    }
+
+    function downloadCanvas(id, filename) {
+      const canvas = document.getElementById(id);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>

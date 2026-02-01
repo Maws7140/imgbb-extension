@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImgBB Uploader</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --surface-color: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary-color: #6366f1;
+      --primary-hover: #4f46e5;
+      --danger-color: #ef4444;
+      --success-color: #22c55e;
+      --radius: 8px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      width: 380px;
+      min-height: 400px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Layout */
+    .container {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 svg {
+      color: var(--primary-color);
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Cards/Sections */
+    .card {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-icon {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .btn-icon:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-toggle-visibility {
+      position: absolute;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .btn-toggle-visibility:hover {
+      color: var(--text-main);
+    }
+
+    /* History Section */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      margin: 0 -8px;
+      padding: 0 8px;
+    }
+
+    /* Scrollbar styling */
+    .history-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .history-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .history-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      transition: transform 0.1s, border-color 0.1s;
+    }
+
+    .history-item:hover {
+      border-color: var(--primary-color);
+    }
+
+    .history-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--surface-color);
+    }
+
+    .history-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-link {
+      color: var(--text-main);
+      font-size: 13px;
+      text-decoration: none;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .history-link:hover {
+      color: var(--primary-color);
+    }
+
+    .history-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-action {
+      padding: 6px;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-action.copied {
+      border-color: var(--success-color);
+      color: var(--success-color);
+    }
+
+    /* Status Messages */
+    .status-toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--success-color);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .status-toast.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .status-toast.error {
+      background: var(--danger-color);
+    }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* Links */
+    a.link {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    
+    a.link:hover {
+      text-decoration: underline;
+    }
+
+    /* Icons */
+    .icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-sm {
+      width: 14px;
+      height: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        ImgBB Uploader
+      </h1>
+      <div class="subtitle">Right-click to upload</div>
+    </header>
+
+    <div class="card">
+      <div class="card-title">API Configuration</div>
+      
+      <div class="form-group">
+        <label for="apiKey">API Key</label>
+        <div class="input-wrapper">
+          <input type="password" id="apiKey" placeholder="Paste API key">
+          <button id="toggleBtn" class="btn-toggle-visibility" type="button" title="Toggle Visibility">
+            <svg class="icon" viewBox="0 0 24 24" id="eyeIcon">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="expiration">Auto-delete</label>
+        <select id="expiration">
+          <option value="0">Never</option>
+          <option value="60">After 1 minute</option>
+          <option value="300">After 5 minutes</option>
+          <option value="3600">After 1 hour</option>
+          <option value="86400">After 1 day</option>
+          <option value="604800">After 1 week</option>
+          <option value="2592000">After 1 month</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <button id="saveBtn" class="btn btn-primary">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Save
+        </button>
+      </div>
+      
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+        <a href="https://api.imgbb.com/" target="_blank" class="link">Get API Key</a>
+      </div>
+    </div>
+
+    <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+      <div class="history-header">
+        <div class="card-title" style="margin: 0;">History</div>
+        <button id="clearHistoryBtn" class="btn-icon" title="Clear History">
+          <svg class="icon" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div id="historyList" class="history-list">
+        <!-- History items will be injected here -->
+        <div class="empty-state">No uploads.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="status" class="status-toast">Saved.</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
