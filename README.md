@@ -24,4 +24,4 @@ MIT
 
 If you would like to support the development of this extension, you can do so through the following methods:
 
-- [Buy me a coffee](ko-fi.com/kingmaws)
+ko-fi.com/kingmaws
